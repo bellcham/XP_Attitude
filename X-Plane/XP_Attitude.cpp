@@ -269,7 +269,7 @@ void MyDrawWindowCallback(
                                    XPLMWindowID         inWindowID,    
                                    void *               inRefcon)
 {
-	int		left, top, right, bottom;
+	int		left, top, right, bottom, iOverride;
 	float	color[] = { 1.0, 1.0, 1.0 }; 	/* RGB White */
 	struct {
 		float Override;
@@ -301,16 +301,28 @@ void MyDrawWindowCallback(
 			sprintf(ScreenBuffer[6], "Bytes sent: %d\n", iSendResult);
 		}
 		
-		iSendResult = recvfrom(ClientSocket, recvbuf, 12, 0, NULL, 0);
+		iSendResult = recvfrom(ClientSocket, recvbuf, 16, 0, NULL, 0);
 		if (iSendResult == SOCKET_ERROR) {
 			sprintf(ScreenBuffer[7], "receive failed with error: %d\n", WSAGetLastError());
 		}
 		else {
 			sprintf(ScreenBuffer[7], "Bytes Received: %d\n", iSendResult);
 			sprintf(ScreenBuffer[8], "Data Received: %s\n", recvbuf);
-			if (iSendResult == 12) {
+			if (iSendResult == 16) {
 				memcpy(&InputData, recvbuf, sizeof(InputData));
 				sprintf(ScreenBuffer[9], "Override: %f, Psi: %f, Theta: %f, Phi: %f\n", InputData.Override, InputData.Psi, InputData.Theta, InputData.Phi);
+				
+				if (InputData.Override) {
+					iOverride = 1;
+					XPLMSetDatavi(gOverrideDataRef, &iOverride, 0, 1);
+					XPLMSetDataf(gPsiDataRef, InputData.Psi);
+					XPLMSetDataf(gThetaDataRef, InputData.Theta);
+					XPLMSetDataf(gPhiDataRef, InputData.Phi);
+				}
+				else {
+					iOverride = 0;
+					XPLMSetDatavi(gOverrideDataRef, &iOverride, 0, 1);
+				}
 			}
 			
 		}
